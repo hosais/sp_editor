@@ -38,8 +38,24 @@ def search_value_in_row_index(ws, search_string, row=1):
     for cell in ws[row]:
         if cell.value == search_string:
             return cell.column, row
-    return None, row    
+    return None, row 
 
+def get_last_new_row(ws):
+    '''
+    column = "A"
+    for row in range(1, ws.max_row + 1):
+        coordinate = "{}{}".format(column, row)        
+        if ws[coordinate].value == None: 
+            print("value = ")
+            print(ws[coordinate].value)
+            break
+    return row
+    WE ASSUME: There is no empty row in the database
+    '''
+    column,row =  search_value_in_column(ws, None, "A")
+    if row==None:
+        return ws.max_row+1
+    return row
 
 #######################################3333
 # WorkTime
@@ -93,10 +109,26 @@ class WorkTime:
             Wrong -> create and save log record 
                      Show error message that need to contact with manager.
         '''
-    def save_log_record2sp(self):
+    def save_sp(self):
+        self.data_wb.save(self.data_filename)
+        
+    def save_log_record2sp(self,user_name,current_time):
         '''
         
         '''
+        employee_ws = self.data_wb[user_name] 
+        row = get_last_new_row(employee_ws) 
+        
+        # name
+        coordinate = "{}{}".format("A", row) 
+        employee_ws[coordinate] = user_name
+        # checking there is no WRONG checkout before
+        # check in time
+        coordinate = "{}{}".format("B", row) 
+        employee_ws[coordinate] = current_time
+        
+        
+        self.save_sp()
     def check_pw(self):
 
 
@@ -111,9 +143,11 @@ class WorkTime:
             user_name = "user not Found"        
         msg_str = "歡迎 "+user_name+" 登入,您簽到的時間是:"+current_time
         self.msg.set(msg_str)
+  ############################333      
+        self.save_log_record2sp(user_name,now)
         
-        
-
+         
+############################################33
 
         #workbook.save(self.data_filename)
         
