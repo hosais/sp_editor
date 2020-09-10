@@ -78,7 +78,7 @@ class WorkTime:
         self.employee_num_lb.pack()
         self.employee_entry = tk.Entry(self.worktime_ui,textvariable=self.employee_num)
         self.employee_entry.pack()
-        self.login_btn = tk.Button(self.worktime_ui,text="登入",command=self.check_pw)
+        self.login_btn = tk.Button(self.worktime_ui,text="登入",command=self.register)
         self.login_btn.pack()
         self.result_msg=tk.Label(self.worktime_ui,fg="red",textvariable=self.msg)
         self.result_msg.pack()
@@ -112,21 +112,39 @@ class WorkTime:
     def save_sp(self):
         self.data_wb.save(self.data_filename)
         
+    def is_no_open_log(self):
+        return True
+        
     def save_log_record2sp(self,user_name,current_time):
         '''
         
         '''
         employee_ws = self.data_wb[user_name] 
-        row = get_last_new_row(employee_ws) 
+        row = get_last_new_row(employee_ws)
         
+        # get today :
+        now = datetime.now()
+        
+        ###### search today's record. 
+        #  if no today record 
+        #      save ABC 
+        #  else 
+        #      D is empty  Save D##################################
+        
+        ################# Save ABC #############333333
         # name
         coordinate = "{}{}".format("A", row) 
         employee_ws[coordinate] = user_name
         # checking there is no WRONG checkout before
         # check in time
         coordinate = "{}{}".format("B", row) 
-        employee_ws[coordinate] = current_time
+        employee_ws[coordinate] = current_time.date()
         
+        coordinate = "{}{}".format("C", row) 
+        employee_ws[coordinate] = current_time.time()
+        ############# save D #####################3
+        coordinate = "{}{}".format("D", row) 
+        employee_ws[coordinate] = current_time.time()
         
         self.save_sp()
     def check_pw(self):
@@ -143,15 +161,18 @@ class WorkTime:
             user_name = "user not Found"        
         msg_str = "歡迎 "+user_name+" 登入,您簽到的時間是:"+current_time
         self.msg.set(msg_str)
-  ############################333      
+        return user_name, now
+ 
+
+        #workbook.save(self.data_filename)
+    def register(self):
+        user_name, now = self.check_pw()
+         ############################333 
+         
         self.save_log_record2sp(user_name,now)
         
          
 ############################################33
-
-        #workbook.save(self.data_filename)
-        
-    
 ######## End of work time
 ##########################################
 def main():
