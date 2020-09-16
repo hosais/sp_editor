@@ -39,6 +39,27 @@ def search_value_in_row_index(ws, search_string, row=1):
         if cell.value == search_string:
             return cell.column, row
     return None, row 
+def only_compare_date(datetime_a, datetime_b):
+    '''
+    if type not the same return false
+    if the type matched, compare only the date
+    '''
+    if type(datetime_a)==type(datetime_b):
+        return datetime_a.date() == datetime_b.date()
+    else:
+        return False
+
+def search_value_all_records_in_column(ws, match_value, column="A",compare_func=None):  
+    '''
+    This function return a list of rows in the column that the value matched
+    compare_func is in case that we need to ONLY compare part of the value such as only date and does not care the time
+    '''
+    row_list = []
+    for row in range(1, ws.max_row + 1):
+        coordinate = "{}{}".format(column, row)          
+        if compare_func(ws[coordinate].value,match_value):             
+            row_list.append(row)   
+    return row_list
 
 def get_last_new_row(ws):
     '''
@@ -115,43 +136,63 @@ class WorkTime:
     def is_no_open_log(self):
         return True
         
-    def save_log_record2sp(self,user_name,current_time):
+    def save_log_record2sp(self,user_name,current_date_time):
         '''
         
+        1. Search all todays log and add the new check in time
+                 If today's records are all compleate log => checkin => create a new log with check in.
+                 If there are one open record (has check in but no checkout) => checkout => put the log in the last today record
+        2. alert log error if there are
         '''
-        employee_ws = self.data_wb[user_name] 
-        row = get_last_new_row(employee_ws)
+        employee_ws = self.data_wb[user_name]   
         
-        # get today :
-        now = datetime.now()
         
         ###### search today's record. 
+        date_log_record_list = search_value_all_records_in_column(employee_ws, current_date_time, "B",only_compare_date)
         #  if no today record 
         #      save ABC 
         #  else 
         #      D is empty  Save D##################################
+        print("dates are ")
+        print(date_log_record_list)
+        # check the login should be checkout or checkin
+        is_checkout = False
+        for row in date_log_record_list:
+            # if column D is empty(None) => No checkout, this is this time should be checkout 
+            coordinate = "{}{}".format("D", row)         
+            print ("row:", row , "column D is ", employee_ws[coordinate].value )
+            if (employee_ws[coordinate].value == None):
+                employee_ws[coordinate] = current_date_time.time()
+                is_checkout = True
         
-        ################# Save ABC #############333333
-        # name
-        coordinate = "{}{}".format("A", row) 
-        employee_ws[coordinate] = user_name
-        # checking there is no WRONG checkout before
-        # check in time
-        coordinate = "{}{}".format("B", row) 
-        employee_ws[coordinate] = current_time.date()
-        
-        coordinate = "{}{}".format("C", row) 
-        employee_ws[coordinate] = current_time.time()
-        ############# save D #####################3
-        coordinate = "{}{}".format("D", row) 
-        employee_ws[coordinate] = current_time.time()
+        if is_checkout == False:
+            # create a new row
+            row = get_last_new_row(employee_ws)
+            ################# Save ABC #############333333
+            # name
+            coordinate = "{}{}".format("A", row) 
+            employee_ws[coordinate] = user_name
+            # checking there is no WRONG checkout before
+            # check in time
+            coordinate = "{}{}".format("B", row) 
+            employee_ws[coordinate] = current_date_time.date()
+            #Important Note: in spreadsheet, there is only datetime data. The date or time is depends on VIEW
+            # therefore, when you save date() it make the time to be 00:00:00
+            # This is important for compare the date info
+
+            coordinate = "{}{}".format("C", row) 
+            employee_ws[coordinate] = current_date_time.time()
+            ############# save D sta#####################3
+            coordinate = "{}{}".format("D", row) 
+            employee_ws[coordinate] = current_date_time.time()
         
         self.save_sp()
+        
     def check_pw(self):
 
 
         now = datetime.now()
-        date = now.today()
+        
         current_time = now.strftime("%m/%d -- %H:%M:%S")
         #print("Current Time =", current_time)
         #https://stackoverflow.com/questions/50491839/python-openpyxl-find-strings-in-column-and-return-row-number
