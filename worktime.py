@@ -134,15 +134,31 @@ class WorkTime:
         self.data_wb.save(self.data_filename)
         
     def is_no_open_log(self):
+        '''
+        alert log error if there are
+             If not today and the log is open (no checkout time)=> error
+        
+        For all row
+            For Column D
+               If columne D = None (empty)
+                    if column A != today
+                        return false
+            
+        '''
+        #https://stackoverflow.com/questions/38619471/iterate-through-all-rows-in-specific-column-openpyxl
+        #https://openpyxl.readthedocs.io/en/stable/tutorial.html
+        
+        
+        
         return True
         
     def save_log_record2sp(self,user_name,current_date_time):
         '''
         
-        1. Search all todays log and add the new check in time
+        Search all todays log and add the new check in time
                  If today's records are all compleate log => checkin => create a new log with check in.
                  If there are one open record (has check in but no checkout) => checkout => put the log in the last today record
-        2. alert log error if there are
+        
         '''
         employee_ws = self.data_wb[user_name]   
         
@@ -211,6 +227,7 @@ class WorkTime:
          ############################333 
          
         self.save_log_record2sp(user_name,now)
+        # check not today but open log => error
         
          
 ############################################33
